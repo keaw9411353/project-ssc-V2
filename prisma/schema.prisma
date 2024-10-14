@@ -1,0 +1,130 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model categories {
+  CategoriesID   Int         @id @default(autoincrement())
+  CategoriesName String?     @db.VarChar(255)
+
+  products products[]  // One-to-many relationship with products
+}
+
+model payments {
+  paymentID      Int       @id @default(autoincrement())
+  OrderID         Int       // Foreign key to orders
+  PaymentDate     DateTime? @db.Timestamp(0)
+  Amount          Decimal?  @db.Decimal(10, 2)
+  PaymentMethod   financials_PaymentMethod?
+  remark          String?
+  payment_status  String?
+
+  orders          orders @relation(fields: [OrderID], references: [OrderID])  // Correct relation to orders
+
+  @@index([OrderID], map: "OrderID")
+}
+
+model orderdetails {
+  OrdersDetailID   Int       @id @default(autoincrement())
+  OrderID          Int       // Foreign key to orders
+  Products_id      Int       // Foreign key to products
+  Quantity         Int?
+  UnitPrice        Decimal?  @db.Decimal(10, 2)
+
+  orders           orders   @relation(fields: [OrderID], references: [OrderID])  // Correct relation to orders
+  product          products @relation(fields: [Products_id], references: [Products_id])  // Correct relation to products
+
+  @@index([Products_id], map: "Products_id")
+}
+
+model orders {
+  OrderID          Int                 @id @default(autoincrement())
+  UserID           Int?               // Optional foreign key to users
+  OrderDate        DateTime?           @db.Timestamp(0)
+  TotalAmount      Decimal?            @db.Decimal(10, 2)
+  OrderStatus      orders_OrderStatus?
+  phonenumber      String?
+  shipping_address String?
+
+  
+  user             users?              @relation(fields: [UserID], references: [UserID]) 
+
+  orderdetail      orderdetails[]  // One-to-many relationship with orderdetails
+  payment          payments[]      // One-to-many relationship with payments
+  
+  @@index([UserID], map: "UserID")
+}
+
+model products {
+  Products_id      Int         @id @default(autoincrement())
+  ProductsName     String?     @db.VarChar(255)
+  CategoryID       Int?        
+  Description      String?     @db.Text
+  Price            Decimal?    @db.Decimal(10, 2)
+  ImageURL         String?     @db.VarChar(255)
+  status           String?     @db.VarChar(255)
+
+  orderdetail      orderdetails[] // One-to-many relationship with orderdetails
+  reviews          reviews[]      // One-to-many relationship with reviews
+  categories       categories?    @relation(fields: [CategoryID], references: [CategoriesID])  // Relation with categories
+}
+
+
+model reviews {
+  ReviewID         Int       @id @default(autoincrement())
+  ProductID        Int       // Foreign key to products
+  UserID           Int       // Foreign key to users
+  Comment          String?   @db.Text
+  Rating           Int?
+  CreatedAt        DateTime? @db.Timestamp(0)
+
+  user             users    @relation(fields: [UserID], references: [UserID])    // Correct relation to users
+  product          products @relation(fields: [ProductID], references: [Products_id])  // Correct relation to products
+}
+
+model users {
+  UserID           Int        @id @default(autoincrement())
+  Username         String?    @db.VarChar(50)
+  Password         String?    @db.VarChar(255)
+
+  order          orders[]   // One-to-many relationship with orders
+  reviews        reviews[]  // One-to-many relationship with reviews
+  customers      customers?  // One-to-many relationship with customers
+
+}
+
+model projects {
+  ProjectID        Int       @id @default(autoincrement())
+  ProjectName      String?   @db.VarChar(255)
+  Description      String?   @db.Text
+  ImageURL         String?   @db.VarChar(255)
+}
+
+model customers {
+  Customer_ID      Int               @id @default(autoincrement())
+  Customer_name    String?           @db.VarChar(255)
+  UserID           Int               @unique
+  Status           String?
+  email            String?
+
+  user             users @relation(fields: [UserID], references: [UserID])  // Correct relation to users
+  @@index([UserID], map: "UserID")
+}
+
+enum orders_OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum financials_PaymentMethod {
+  Credit_Card
+  PayPal
+  Bank_Transfer
+}

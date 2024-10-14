@@ -1,0 +1,7 @@
+npx prisma migrate dev --name init
+
+note: migrate data base in prisma สร้าง database 
+
+npx prisma generate
+
+npx nodemon npm start
